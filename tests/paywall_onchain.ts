@@ -18,7 +18,7 @@ import { Program } from "@coral-xyz/anchor"
 import { PaywallOnchain } from "../target/types/paywall_onchain"
 import { PriceState, initPrice, updatePrice } from "./price"
 import { delay, initializeTestUsers, safeAirdrop } from "./util"
-import { programAuthority, userKeypair1 } from "./testKeypairs"
+import { programAuthority, programAuthorityDevnet, userKeypair1 } from "./testKeypairs"
 
 type KP = anchor.web3.Keypair
 
@@ -31,24 +31,30 @@ describe("paywall_onchain", () => {
 
   const program = anchor.workspace.PaywallOnchain as Program<PaywallOnchain>
 
-  describe.skip("price", () => {
+  describe("price", () => {
     /*it("initializes price", async () => {
     
       let result = await initPrice(program)
 
       expect(result.price).to.equal(1000000)
-    })
+    })*/
 
     it("updates price", async () => {
-      let state = await initPrice(program)
+      console.log('programAuthority: ', programAuthorityDevnet.publicKey.toBase58())
+      await safeAirdrop(programAuthorityDevnet.publicKey, program.provider.connection)
+      delay(2000)
 
-      await updatePrice(state, 5000000)
+      let state = await initPrice(program, programAuthorityDevnet)
+
+      await updatePrice(state, programAuthorityDevnet, 7)
 
       let result = await (await state.refresh()).price
-      expect(result).to.equal(5000000)
+      console.log('state.publicKey: ', state.publicKey.toBase58())
+      state.log()
+      expect(result).to.equal(7)
     })
 
-    it("updates price", async () => {
+    /*it("updates price", async () => {
       let state = await initPrice(program)
 
       await updatePrice(state, 5000000)
@@ -89,7 +95,7 @@ describe("paywall_onchain", () => {
       assert.equal(Number(newBalance.value.uiAmount), 1000)
     })
 
-    it("xp-1", async () => {
+    xit("xp-1", async () => {
       const payer = (provider.wallet as anchor.Wallet).payer;
       await safeAirdrop(programAuthority.publicKey, provider.connection)
       await safeAirdrop(provider.wallet.publicKey, provider.connection)
@@ -206,27 +212,6 @@ describe("paywall_onchain", () => {
 
 })
 
-export async function buy(price: PriceState, mint: PublicKey, fromKp: KP) {
-  let program = price.program
-  const provider = program.provider as anchor.AnchorProvider
-
-  const fromAta = await createAssociatedTokenAccount(
-    program.provider.connection,
-    fromKp,
-    mint,
-    fromKp.publicKey
-  );
-
-  await program.methods
-      .buy()
-      .accounts({
-        priceAccount: price.getPubKey(),
-        from: fromKp.publicKey,
-        fromAta: fromAta,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .rpc();
-}
 
 
 

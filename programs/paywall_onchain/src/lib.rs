@@ -1,18 +1,19 @@
+use anchor_spl::token::{Mint, Token, TokenAccount, Transfer, transfer};
+
 use {
     anchor_lang::prelude::*,
-    solana_program::{ pubkey, pubkey::Pubkey },
+    solana_program::{pubkey, pubkey::Pubkey},
 };
-use anchor_spl::token::{ TokenAccount, Token, Mint, Transfer, transfer };
 
 declare_id!("DTsXoYPip9jQTBRvrVXeCWXe3FXbZanBQxgfCm38PE7a");
 
 pub const STAKE_POOL_STATE_SEED: &str = "state";
 pub const STAKE_POOL_SIZE: usize = 8 + 32 + 32 + 1 + 8 + 32 + 8 + 1 + 1 + 32 + 16 + 8;
-
 pub const VAULT_SEED: &str = "vault";
 pub const VAULT_AUTH_SEED: &str = "vault_authority";
+pub const PRICE_STATE_SEED: &str = "price_state";
 
-pub static PROGRAM_AUTHORITY: Pubkey = pubkey!("9MNHTJJ1wd6uQrZfXk46T24qcWNZYpYfwZKk6zho4poV");
+pub static PROGRAM_AUTHORITY: Pubkey = pubkey!("6tmzmp3ZxW9kk4T3chvxi3CNLvkGU7Gqpkaz3CV6NUJ");
 
 pub const MULT: u128 = 10_000_000_000;
 pub const RATE_MULT: u128 = 100_000_000_000;
@@ -42,8 +43,6 @@ pub enum PaywallErrorCode {
     InvalidUser,
 }
 
-const PRICE_STATE_SEED: &[u8] = b"price_state";
-
 #[program]
 pub mod paywall_onchain {
     use super::*;
@@ -72,16 +71,9 @@ pub mod paywall_onchain {
     }
 
     pub fn update_price(ctx: Context<UpdatePrice>, new_price: u64) -> Result<()> {
-        if &ctx.accounts.price_account.authority != ctx.accounts.price_authority.key {
-            return Err(error!(PaywallErrorCode::Unauthorized));
-        }
-
+        msg!("Prev price: {}, new price: {}", ctx.accounts.price_account.price, new_price);
         ctx.accounts.price_account.price = new_price;
         Ok(())
-    }
-
-    pub fn buy(ctx: Context<Buy>) -> Result<()> {
-        return Err(error!(PaywallErrorCode::NotImplemented));
     }
 
     pub fn deposit(ctx: Context<StakeCtx>, deposit_amount: u64) -> Result<()> {
@@ -106,7 +98,7 @@ pub mod paywall_onchain {
 pub struct InitializePrice<'info> {
     #[account(
         init,
-        seeds = [PRICE_STATE_SEED],
+        seeds = [PRICE_STATE_SEED.as_bytes()],
         payer = authority,
         space = 8 + std::mem::size_of::<PriceState>(),
         bump,
@@ -170,37 +162,18 @@ pub struct InitializePool<'info> {
 
 #[derive(Accounts)]
 pub struct UpdatePrice<'info> {
-    /// CHECK: The contraint on the price_account field verifies the owner.
-    #[account(signer)]
-    pub price_authority: AccountInfo<'info>,
-
     #[account(
         mut,
-        constraint = price_account.authority == price_authority.key(),
-        seeds = [PRICE_STATE_SEED],
-        bump = price_account.bump,
-    )]
-    pub price_account: Account<'info, PriceState>,
-}
-
-#[derive(Accounts)]
-pub struct Buy<'info> {
-    #[account(
-        mut,
-        seeds = [PRICE_STATE_SEED],
+        seeds = [PRICE_STATE_SEED.as_bytes()],
         bump = price_account.bump,
     )]
     pub price_account: Account<'info, PriceState>,
 
-    pub from: Signer<'info>,
-
-    #[account(mut)] // How do I limit to: token::mint = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
-    pub from_ata: Account<'info, TokenAccount>,
-
-    //#[account(mut)]
-    //pub to_ata: Account<'info, TokenAccount>,
-
-    pub token_program: Program<'info, Token>,
+    #[account(
+        mut,
+        constraint = program_authority.key() == price_account.authority @ PaywallErrorCode::InvalidProgramAuthority
+    )]
+    pub program_authority: Signer<'info>,
 }
 
 #[account]
@@ -235,7 +208,7 @@ pub struct StakeCtx <'info> {
     #[account(
         mut,
         constraint = price_state.authority == pool.authority @ PaywallErrorCode::InvalidPriceAuthority,
-        seeds = [PRICE_STATE_SEED],
+        seeds = [PRICE_STATE_SEED.as_bytes()],
         bump = price_state.bump,
     )]
     pub price_state: Account<'info, PriceState>,

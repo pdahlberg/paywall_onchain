@@ -7,7 +7,7 @@ import { BaseState } from "./base_state"
 
 type KP = anchor.web3.Keypair
 
-export function getPricePda(program): PublicKey {
+export function getPricePda(program: Program<PaywallOnchain>): PublicKey {
     const [pda, _] = PublicKey.findProgramAddressSync(
         [
             anchor.utils.bytes.utf8.encode("price_state"),
@@ -17,7 +17,7 @@ export function getPricePda(program): PublicKey {
     return pda
 }
 
-export async function initPrice(program: Program<PaywallOnchain>, programAuthority: Keypair): Promise<PriceState> {
+export async function initPrice(program: Program<PaywallOnchain>, authority: Keypair): Promise<PriceState> {
     const provider = program.provider as anchor.AnchorProvider
 
     let pricePda = getPricePda(program)
@@ -28,16 +28,16 @@ export async function initPrice(program: Program<PaywallOnchain>, programAuthori
             .initialize()
             .accounts({
                 priceState: pricePda,
-                authority: programAuthority.publicKey, 
+                authority: authority.publicKey, 
             })
-            .signers([programAuthority])
+            .signers([authority])
             .rpc()
     }
 
     return PriceState.createPda(program, pricePda)
 }
 
-export async function updatePrice(state: PriceState, programAuthority: Keypair, newPrice: Number) {
+export async function updatePrice(state: PriceState, authority: Keypair, newPrice: Number) {
     let program = state.program;
     const programProvider = program.provider as anchor.AnchorProvider;
 
@@ -45,9 +45,9 @@ export async function updatePrice(state: PriceState, programAuthority: Keypair, 
         .updatePrice(new anchor.BN(newPrice))
         .accounts({
             priceAccount: state.getPubKey(),
-            priceAuthority: programAuthority.publicKey,
+            programAuthority: authority.publicKey,
         })
-        .signers([programAuthority])
+        .signers([authority])
         .rpc();
 }
 
@@ -62,6 +62,7 @@ export class PriceState extends BaseState<PriceState> {
 
     async refresh(): Promise<PriceState> {
         let state = await this.program.account.priceState.fetch(this.getPubKey())
+        console.log(`PriceState.refresh: ${this.getPubKey()}`)
         this.price = state.price.toNumber()
         return this
     }

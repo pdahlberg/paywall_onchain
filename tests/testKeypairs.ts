@@ -36,6 +36,14 @@ export const programAuthority = Keypair.fromSecretKey(Uint8Array.from([
     18, 160,  29,  95, 177, 209, 129,  68,  60
 ]))
 
+export const programAuthorityDevnet = Keypair.fromSecretKey(Uint8Array.from([
+    29,250,149,5,5,79,242,42,89,154,72,141,198,232,65,9,6,
+    33,235,18,238,97,132,46,139,5,101,229,187,108,26,207,
+    1,130,114,118,164,48,154,15,125,32,127,40,161,186,125,
+    165,237,117,30,63,69,224,171,66,198,255,182,41,210,165,
+    70,139
+]))
+
 export const incorrectProgramAuthority = Keypair.fromSecretKey(Uint8Array.from(
     [
         236, 171, 153, 235,  14, 211, 175, 198, 217,  87, 130,

@@ -1,15 +1,20 @@
 [features]
 seeds = false
 skip-lint = false
+
 [programs.localnet]
+paywall_onchain = "DTsXoYPip9jQTBRvrVXeCWXe3FXbZanBQxgfCm38PE7a"
+
+[programs.devnet]
 paywall_onchain = "DTsXoYPip9jQTBRvrVXeCWXe3FXbZanBQxgfCm38PE7a"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
-wallet = "./id.json" # 87AT56xPtYs3yracfWKJ8trTpeahKQY2nTQVSMAsH3J5
+# cluster = "Localnet"
+cluster = "devnet"
+wallet = ".secrets/6tmzmp3ZxW9kk4T3chvxi3CNLvkGU7Gqpkaz3CV6NUJ.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
