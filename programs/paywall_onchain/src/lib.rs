@@ -76,18 +76,18 @@ pub mod paywall_onchain {
         Ok(())
     }
 
-    pub fn deposit(ctx: Context<StakeCtx>, deposit_amount: u64) -> Result<()> {
+    pub fn pay(ctx: Context<Payment>, pay_amount: u64) -> Result<()> {
         // transfer amount from user token acct to vault
-        transfer(ctx.accounts.transfer_ctx(), deposit_amount)?;
+        transfer(ctx.accounts.transfer_ctx(), pay_amount)?;
 
         msg!("Pool initial total: {}", ctx.accounts.pool.amount);
         let price_state = &ctx.accounts.price_state;
 
-        require!(deposit_amount == price_state.price, PaywallErrorCode::IncorrectAmount);
+        require!(pay_amount == price_state.price, PaywallErrorCode::IncorrectAmount);
 
         // update pool state amount
         let pool = &mut ctx.accounts.pool;
-        pool.amount = pool.amount.checked_add(deposit_amount).unwrap();
+        pool.amount = pool.amount.checked_add(pay_amount).unwrap();
         msg!("Current pool total: {}", pool.amount);
 
         Ok(())
@@ -184,7 +184,7 @@ pub struct PriceState {
 }
 
 #[derive(Accounts)]
-pub struct StakeCtx <'info> {
+pub struct Payment<'info> {
     #[account(
         mut,
         seeds = [pool.token_mint.key().as_ref(), STAKE_POOL_STATE_SEED.as_bytes()],
@@ -217,7 +217,7 @@ pub struct StakeCtx <'info> {
     pub system_program: Program<'info, System>
 }
 
-impl<'info> StakeCtx <'info> {
+impl<'info> Payment<'info> {
     pub fn transfer_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         let cpi_program = self.token_program.to_account_info();
         let cpi_accounts = Transfer {

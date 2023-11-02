@@ -187,7 +187,7 @@ describe("paywall_onchain", () => {
         let priceState = await initPrice(program, programAuthority)
         await updatePrice(priceState, programAuthority, 200 * MULT)
 
-        await program.methods.deposit(new anchor.BN(200 * MULT))
+        await program.methods.pay(new anchor.BN(200 * MULT))
           .accounts({
             pool: poolState,
             tokenVault: vault,
