@@ -61,14 +61,15 @@ export class PriceState extends BaseState<PriceState> {
     }
 
     async refresh(): Promise<PriceState> {
-        let state = await this.program.account.priceState.fetch(this.getPubKey())
+        let remoteState = await this.program.account.priceState.fetch(this.getPubKey())
         console.log(`PriceState.refresh: ${this.getPubKey()}`)
-        this.price = state.price.toNumber()
+        this.price = remoteState.price.toNumber()
+        console.log(`PriceState fetched auth value: ${remoteState.authority}`)
         return this
     }
 
     toString(): string {
-        return `${this.instanceName}(${this.price})`
+        return `${this.instanceName}(${this.price}, ${this.getPubKeyStr()})`
     }
 }
 

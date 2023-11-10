@@ -12,6 +12,7 @@ import {
   getAccount,
   createMintToInstruction,
   getOrCreateAssociatedTokenAccount,
+  transfer,
 } from "@solana/spl-token"
 import { assert, expect } from 'chai'
 import { Program } from "@coral-xyz/anchor"
@@ -40,11 +41,24 @@ describe("paywall_onchain", () => {
     })*/
 
     it("updates price", async () => {
+      transfer(
+        connection,
+        payer, //: Signer,
+        source, //: PublicKey,
+        destination, //: PublicKey,
+        owner, //: Signer | PublicKey,
+        amount, //: number | bigint,
+        multiSigners, //: Signer[] = [],
+        confirmOptions, //?: ConfirmOptions,
+        programId, // = TOKEN_PROGRAM_ID    
+      );
+
       console.log('programAuthority: ', programAuthorityDevnet.publicKey.toBase58())
       await safeAirdrop(programAuthorityDevnet.publicKey, program.provider.connection)
       delay(2000)
 
       let state = await initPrice(program, programAuthorityDevnet)
+      state.log()
 
       await updatePrice(state, programAuthorityDevnet, 7)
 

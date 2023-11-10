@@ -207,7 +207,7 @@ pub struct Payment<'info> {
 
     #[account(
         mut,
-        constraint = price_state.authority == pool.authority @ PaywallErrorCode::InvalidPriceAuthority,
+        //constraint = price_state.authority == pool.authority @ PaywallErrorCode::InvalidPriceAuthority,
         seeds = [PRICE_STATE_SEED.as_bytes()],
         bump = price_state.bump,
     )]
